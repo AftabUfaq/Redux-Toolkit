@@ -1,9 +1,9 @@
 const redux = require("redux")
+const axios = require("axios")
 const reduxLogger = require("redux-logger")
-
+const thunkMiddleware = require("redux-thunk").default
 const applyMiddleware = redux.applyMiddleware
 const createReduxStore = redux.createStore 
-const bindActionCreators = redux.bindActionCreators
 const combineReducers = redux.combineReducers
 const logger = reduxLogger.createLogger()
 
@@ -63,7 +63,21 @@ const reducer = (state = initialState , action) => {
     }
 }
 
+const fetchUser = () => {
+    return function(dispatch){
+        dispatch(fetchUserRequested())
+        axios.get("https://jsonplaceholder.typicode.com/users").then((response) => {
+            const users = response.data.map(user => user.id) 
+            dispatch(fetchUserSuccess(users))
+        }).catch((err) => {
+            dispatch(fetchUserFailure(err.message))
+           // err.message
+        })
+    }
+}
 const roorReducer = combineReducers({
     reducer:reducer,
 }) 
- const store = createReduxStore(roorReducer, applyMiddleware(logger)) 
+ const store = createReduxStore(roorReducer, applyMiddleware(thunkMiddleware)) 
+ store.subscribe(() => console.log(store.getState()))
+ store.dispatch(fetchUser())
